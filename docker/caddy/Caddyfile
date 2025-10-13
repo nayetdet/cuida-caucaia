@@ -1,4 +1,13 @@
-{$SERVER_HOST} {
+(cloudflare) {
+    encode gzip
+    tls {
+        dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+    }
+}
+
+{$CLOUDFLARE_DOMAIN} {
+    import cloudflare
+
     handle_path /api* {
         reverse_proxy http://cuida_caucaia_api:8000 {
             header_up Host {host}

@@ -52,7 +52,9 @@ services:
       - cuida_caucaia_api_mongodb_network
 
   caddy:
-    image: caddy:latest
+    build:
+      context: .
+      dockerfile: ./docker/caddy/Dockerfile
     container_name: cuida_caucaia_caddy
     ports:
       - "80:80"
@@ -62,7 +64,9 @@ services:
       - cuida_caucaia_caddy_data:/data
       - cuida_caucaia_caddy_config_data:/config
     environment:
-      SERVER_HOST: ${SERVER_HOST}
+      CLOUDFLARE_DOMAIN: ${CLOUDFLARE_DOMAIN}
+      CLOUDFLARE_API_TOKEN: ${CLOUDFLARE_API_TOKEN}
+      CLOUDFLARE_EMAIL: ${CLOUDFLARE_EMAIL}
       ACME_AGREE: true
     networks:
       - cuida_caucaia_caddy_api_network
