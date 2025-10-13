@@ -1,0 +1,16 @@
+[project]
+name = "cuida-caucaia"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+authors = [
+    { name = "nayetdet", email = "jpmoreiracampos21@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.uv.workspace]
+members = [
+    "packages/api",
+    "packages/webui",
+]
