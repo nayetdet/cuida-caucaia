@@ -1,0 +1,93 @@
+services:
+  api:
+    build:
+      context: .
+      dockerfile: ./docker/uv/Dockerfile
+      args:
+        PACKAGE: api
+    container_name: cuida_caucaia_api
+    environment:
+      API_UBER_RIDE_URL: ${API_UBER_RIDE_URL}
+      API_SCHEDULER_INTERVAL_IN_MINUTES: ${API_SCHEDULER_INTERVAL_IN_MINUTES}
+      API_CORS_ORIGINS: ${API_CORS_ORIGINS}
+      MONGODB_DATABASE: ${MONGODB_DATABASE}
+      MONGODB_HOST: mongodb
+      MONGODB_USERNAME: ${MONGODB_USERNAME}
+      MONGODB_PASSWORD: ${MONGODB_PASSWORD}
+    entrypoint: ["uvicorn", "packages.api.src.api.main:app", "--host", "0.0.0.0", "--port", "8000", "--root-path", "/api"]
+    restart: unless-stopped
+    networks:
+      - cuida_caucaia_api_webui_network
+      - cuida_caucaia_api_mongodb_network
+      - cuida_caucaia_caddy_api_network
+
+  webui:
+    build:
+      context: .
+      dockerfile: ./docker/uv/Dockerfile
+      args:
+        PACKAGE: webui
+    container_name: cuida_caucaia_webui
+    environment:
+      WEBUI_API_URL: http://cuida_caucaia_api:8000
+    entrypoint: ["streamlit", "run", "packages/webui/src/webui/main.py", "--server.address=0.0.0.0", "--server.port=8501"]
+    restart: unless-stopped
+    networks:
+      - cuida_caucaia_api_webui_network
+      - cuida_caucaia_caddy_webui_network
+
+  mongodb:
+    image: mongo:latest
+    container_name: cuida_caucaia_mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE}
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_PASSWORD}
+    volumes:
+      - cuida_caucaia_mongodb_data:/data/db
+    restart: unless-stopped
+    networks:
+      - cuida_caucaia_api_mongodb_network
+
+  caddy:
+    image: caddy:latest
+    container_name: cuida_caucaia_caddy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/caddy/Caddyfile:/etc/caddy/Caddyfile
+      - cuida_caucaia_caddy_data:/data
+      - cuida_caucaia_caddy_config_data:/config
+    environment:
+      SERVER_HOST: ${SERVER_HOST}
+      ACME_AGREE: true
+    networks:
+      - cuida_caucaia_caddy_api_network
+      - cuida_caucaia_caddy_webui_network
+      - cuida_caucaia_caddy_cloudflared
+    restart: unless-stopped
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cuida_caucaia_cloudflared
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    command: tunnel run
+    networks:
+      - cuida_caucaia_caddy_cloudflared
+    restart: unless-stopped
+
+volumes:
+  cuida_caucaia_mongodb_data:
+  cuida_caucaia_caddy_data:
+  cuida_caucaia_caddy_config_data:
+
+networks:
+  cuida_caucaia_api_webui_network:
+  cuida_caucaia_api_mongodb_network:
+  cuida_caucaia_caddy_api_network:
+  cuida_caucaia_caddy_webui_network:
+  cuida_caucaia_caddy_cloudflared:

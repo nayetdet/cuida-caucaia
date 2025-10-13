@@ -1,4 +1,4 @@
-.PHONY: api webui
+.PHONY: api api-login webui
 
 api:
 	uv run uvicorn packages.api.src.api.main:app

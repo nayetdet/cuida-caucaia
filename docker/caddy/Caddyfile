@@ -1,0 +1,27 @@
+{$SERVER_HOST} {
+    handle_path /api* {
+        reverse_proxy http://cuida_caucaia_api:8000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            transport http {
+                response_header_timeout 3600s
+                dial_timeout 3600s
+                read_timeout 3600s
+            }
+        }
+    }
+
+    handle_path /* {
+        reverse_proxy http://cuida_caucaia_webui:8501 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            transport http {
+                versions 1.1
+            }
+        }
+    }
+}
