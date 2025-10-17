@@ -15,5 +15,5 @@ class Config:
         PASSWORD: str = getenv("MONGODB_PASSWORD")
 
     class Paths:
-        ROOT: Path = Path(__file__).resolve().parents[5]
+        ROOT: Path = Path.cwd()
         CONFIG: Path = ROOT / "config"
